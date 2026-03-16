@@ -1,0 +1,3 @@
+"""
+Scripts Vikki Platform.
+"""

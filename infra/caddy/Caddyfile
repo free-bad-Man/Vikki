@@ -1,0 +1,98 @@
+# Caddyfile for Vikki Platform
+# Global options
+{
+    email ${ADMIN_EMAIL:-admin@example.com}
+    admin off
+    servers {
+        trusted_proxies static private_ranges 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+    }
+}
+
+# Production: HTTPS with automatic certificates
+${DOMAIN:-localhost} {
+    # Handle ACME challenges
+    tls {
+        dns ${DNS_PROVIDER:-} ${DNS_API_TOKEN:-}
+    }
+
+    # Next.js Frontend
+    reverse_proxy / web:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Forwarded-Host {host}
+    }
+
+    # API routes proxy to FastAPI
+    reverse_proxy /api/* api:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # WebSocket support for API
+    reverse_proxy /ws/* api:8000 {
+        header_up Host {host}
+        header_up Upgrade {http.request.header.Upgrade}
+        header_up Connection Upgrade
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
+
+    # Compression
+    encode gzip zstd
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
+
+# Local development: HTTP only
+localhost {
+    # Next.js Frontend
+    reverse_proxy / web:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # API routes
+    reverse_proxy /api/* api:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # API docs and health
+    reverse_proxy /docs api:8000
+    reverse_proxy /openapi.json api:8000
+    reverse_proxy /health api:8000
+    reverse_proxy /redoc api:8000
+}
+
+# MinIO Console (internal, accessible via API gateway if needed)
+minio.vikki.internal {
+    reverse_proxy minio:9001 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
