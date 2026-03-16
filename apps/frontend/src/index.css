@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vikki-accent: #00d2ff;
+  --color-vikki-purple: #9d50bb;
+  --color-vikki-up: #10b981;
+  --color-vikki-down: #ef4444;
+}
+
+body {
+  margin: 0;
+  background-color: #050608;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: white;
+  overflow-x: hidden;
+}
+
+.glass-panel-v2 {
+  background: rgba(15, 18, 24, 0.7);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Режим инкогнито */
+.privacy-blur {
+  filter: blur(10px);
+  transition: filter 0.3s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+/* Анимация волны голоса */
+@keyframes wave-flow {
+  0% { transform: scaleY(0.5); }
+  50% { transform: scaleY(1.5); }
+  100% { transform: scaleY(0.5); }
+}
+
+.voice-bar {
+  animation: wave-flow 1.2s infinite ease-in-out;
+}

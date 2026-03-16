@@ -1,0 +1,62 @@
+﻿# env
+.env
+.env.*
+!.env.example
+!.env.dev.example
+!.env.prod.example
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# node
+node_modules/
+.next/
+dist/
+build/
+
+# logs
+*.log
+logs/
+
+# local IDE/system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# secrets
+secrets/
+certs/
+*.key
+*.pfx
+*.p12
+*.pem
+*.crt
+
+# databases / dumps / backups
+*.sql
+*.dump
+*.bak
+backups/
+
+# runtime files
+*.pid
+*.sock
+
+# docker overrides/local
+docker-compose.override.yml
+
+_compose_rendered.yml
+
+test_import.csv
+
+import/
+
+apps/api/celerybeat-schedule
