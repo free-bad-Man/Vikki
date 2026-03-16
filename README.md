@@ -1,44 +1,30 @@
-# Vikki Platform
+Vikki
+MIT License Built with Python/Node.js
 
-Fullstack monorepo with FastAPI + Next.js + PostgreSQL + Redis + MinIO + Celery + Caddy.
+Веб-приложение для автоматизации рутинных бизнес-процессов, призванное сократить трудозатраты, исключить человеческие ошибки и ускорить выполнение задач.
 
-## 📁 Structure
+🌟 Основные возможности
+Автоматизация задач: Автоматическое выполнение повторяющихся действий (отправка email, создание документов, обновление CRM).
+Drag-and-Drop Конструктор: Удобное создание рабочих процессов без знания кода.
+Интеграция с API: Легкое подключение к сторонним сервисам (Telegram, Google Sheets, CRM-системы).
+Мониторинг в реальном времени: Панель управления (Dashboard) для отслеживания статусов выполнения задач.
+🛠 Технологический стек
+Frontend: React / Vue.js / TailwindCSS
+Backend: Python (FastAPI/Django) / Node.js
+Database: PostgreSQL / Redis
+Automation Engine: Celery / BullMQ
+🚀 Быстрый старт
+Для локального запуска выполните следующие команды:
 
-```
-vikki/
-├── apps/
-│   ├── api/              # FastAPI backend
-│   │   ├── app/
-│   │   │   ├── main.py
-│   │   │   ├── config.py
-│   │   │   ├── database.py
-│   │   │   ├── models/
-│   │   │   └── schemas/
-│   │   ├── alembic/      # Database migrations
-│   │   ├── requirements.txt
-│   │   ├── Dockerfile
-│   │   └── celery_app.py
-│   │
-│   └── web/              # Next.js frontend
-│       ├── src/
-│       │   └── app/
-│       ├── package.json
-│       ├── Dockerfile
-│       └── next.config.ts
-│
-├── infra/
-│   ├── compose/
-│   │   ├── docker-compose.dev.yml
-│   │   └── docker-compose.prod.yml
-│   ├── caddy/
-│   │   └── Caddyfile
-│   └── scripts/
-│       ├── deploy.sh
-│       └── backup_pg.sh
-│
-├── .env.example
-└── README.md
+# Клонирование репозитория
+git clone https://github.com
 
-## 📄 License
+# Установка зависимостей
+cd your-project
+npm install  # или pip install -r requirements.txt
 
-MIT
+# Настройка переменных окружения
+cp .env.example .env
+
+# Запуск приложения
+npm run dev  # или uvicorn main:app
