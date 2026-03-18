@@ -1,0 +1,187 @@
+name: vikki
+
+networks:
+  vikki_net:
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vikki_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vikki
+      POSTGRES_USER: vikki
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - vikki_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vikki -d vikki"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: vikki_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vikki_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: vikki_minio
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - vikki_net
+
+  api:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    container_name: vikki_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ../../.env
+    environment:
+      POSTGRES_USER: vikki
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: vikki
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql+asyncpg://vikki:${POSTGRES_PASSWORD}@postgres:5432/vikki
+      REDIS_URL: redis://redis:6379/0
+
+      MINIO_ENDPOINT: minio:9000
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET: vikki
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+      AWS_DEFAULT_REGION: us-east-1
+
+      SBER_TLS_VERIFY: "true"
+      SBER_CA_CERT_PATH: /app/certs/mincifra_bundle.pem
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../apps/api:/app
+      - ../../certs:/app/certs:ro
+    networks:
+      - vikki_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  celery_worker:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    container_name: vikki_celery_worker
+    command:
+      - celery
+      - -A
+      - celery_app:celery_app
+      - worker
+      - -l
+      - info
+      - --concurrency=8
+    env_file:
+      - ../../.env
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL_SYNC: postgresql://vikki:${POSTGRES_PASSWORD}@postgres:5432/vikki
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET: vikki
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+      AWS_DEFAULT_REGION: us-east-1
+      SBER_TLS_VERIFY: "true"
+      SBER_CA_CERT_PATH: /app/certs/mincifra_bundle.pem
+    volumes:
+      - ../../apps/api:/app
+      - ../../certs:/app/certs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vikki_net
+
+  celery_beat:
+    build:
+      context: ../../apps/api
+      dockerfile: Dockerfile
+    container_name: vikki_celery_beat
+    command:
+      - celery
+      - -A
+      - celery_app:celery_app
+      - beat
+      - -l
+      - info
+      - --schedule=/tmp/celerybeat-schedule
+    env_file:
+      - ../../.env
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL_SYNC: postgresql://vikki:${POSTGRES_PASSWORD}@postgres:5432/vikki
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET: vikki
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+      AWS_DEFAULT_REGION: us-east-1
+      SBER_TLS_VERIFY: "true"
+      SBER_CA_CERT_PATH: /app/certs/mincifra_bundle.pem
+    volumes:
+      - ../../apps/api:/app
+      - ../../certs:/app/certs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vikki_net
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    container_name: vikki_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - vikki_net
