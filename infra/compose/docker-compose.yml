@@ -177,11 +177,20 @@ services:
 
   web:
     build:
-      context: ../../apps/web
+      context: ../../apps/frontend
       dockerfile: Dockerfile
     container_name: vikki_web
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
     ports:
-      - "3000:3000"
+      - "3000:80"
     networks:
       - vikki_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
